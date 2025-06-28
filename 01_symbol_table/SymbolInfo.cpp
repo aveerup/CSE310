@@ -7,8 +7,9 @@ class SymbolInfo{
 	private:
 		string variable_name;
 		string variable_type;
-		SymbolInfo *nextSymbolInfo;
+		SymbolInfo *nextSymbolInfo = NULL;
 		SymbolInfo *extraInfo = NULL;
+		ostream *fout = &cout;
 	public:
 		SymbolInfo(string variable_name, string variable_type);
 
@@ -31,6 +32,8 @@ class SymbolInfo{
 		SymbolInfo* get_extra_info();
 
 		void Print();
+
+		void set_output_stream(ostream *fout);
 			
 };
 
@@ -40,7 +43,8 @@ SymbolInfo::SymbolInfo(string variable_name, string variable_type ){
 }
 
 SymbolInfo::~SymbolInfo(){
-	if(extraInfo)
+	// cout<<"SymbolInfo "<<this->variable_name<<" "<<variable_type<<" deleted"<<endl;
+	if(this->extraInfo)
 		delete extraInfo;
 }
 
@@ -72,10 +76,16 @@ void SymbolInfo::set_extra_info(SymbolInfo *extraSymbol){
 	if(extraSymbol == NULL)
 		return ;
 
-	cout<<"symbol_info_set_extra "<<2.6<<endl;
-	extraSymbol->set_extra_info(this->extraInfo);
-	cout<<"symbol_info_set_extra "<<2.5<<endl;
-	this->extraInfo = extraSymbol;
+	if(extraInfo == NULL)
+		this->extraInfo = extraSymbol;
+	else{
+		SymbolInfo *temp = this->extraInfo;
+		while(temp->get_extra_info()){
+			temp = temp->get_extra_info();
+		}
+		temp->set_extra_info(extraSymbol);
+	}
+
 }
 
 SymbolInfo* SymbolInfo::get_extra_info(){
@@ -83,40 +93,43 @@ SymbolInfo* SymbolInfo::get_extra_info(){
 }
 
 void SymbolInfo::Print(){
-	if(this->get_variable_name() == "Struct"){
-		cout<<"<"<<variable_name<<","<<variable_type;
+	if(this->get_variable_type() == "STRUCT" || this->get_variable_type() == "UNION"){
+		*fout<<"<"<<variable_name<<","<<variable_type<<",";
 		SymbolInfo *extra = this->extraInfo;
 		while(extra){
-			cout<<",";
 			if(extra == this->extraInfo)
-				cout<<"{";
-			cout<<"("<<extra->get_variable_type()<<extra->get_variable_name()<<")";
+				*fout<<"{";
+			*fout<<"("<<extra->get_variable_type()<<","<<extra->get_variable_name()<<")";
 			if(extra->get_extra_info() != NULL)
-				cout<<",";
+				*fout<<",";
 			else
-				cout<<"}";
+				*fout<<"}";
 
 			extra = extra->get_extra_info();
 		}
-		cout<<">";
-	}else if(this->get_variable_name() == "Function"){
-		cout<<"<"<<variable_name<<","<<variable_type;
-		SymbolInfo *extra = this->extraInfo;
+		*fout<<">";
+	}else if(this->get_variable_type() == "FUNCTION"){
+		*fout<<"<"<<variable_name<<","<<variable_type<<","<<this->extraInfo->get_variable_type()<<"<==";
+		
+		SymbolInfo *extra = this->extraInfo->get_extra_info();
 		while(extra){
-			cout<<",";
-			if(extra == this->extraInfo)
-				cout<<"{";
-			cout<<extra->get_variable_type();
+			if(extra == this->extraInfo->get_extra_info())
+				*fout<<"(";
+			*fout<<extra->get_variable_type();
 			if(extra->get_extra_info() != NULL)
-				cout<<",";
+				*fout<<",";
 			else
-				cout<<"}";
+				*fout<<")";
 
 			extra = extra->get_extra_info();
 		}
-		cout<<">";
+		*fout<<">";
 	}else{
-		cout<<"<"<<variable_name<<","<<variable_type<<">";
+		*fout<<"< "<<variable_name<<" : "<<variable_type<<" >";
 	}
+}
+
+void SymbolInfo::set_output_stream(ostream *fout){
+	this->fout = fout;
 }
 

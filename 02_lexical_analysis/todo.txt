@@ -1,0 +1,35 @@
+keyword*
+
+id*
+    function*
+    variable*
+
+character
+
+string*
+
+comment*
+    single line*
+    multi line*
+
+space*
+    whitespace*
+    tab*
+
+newline*
+    \n*
+    \r\n*
+
+number
+    int*
+    float*
+
+error
+    invalid_variable_name
+    ill_formed_number
+        multiple_decimal_float
+        float_as_power_in
+    unfinished_multi_line_comment
+    unfinished_string
+    invalid_escape_sequence_inside_string
+    unfinished_char

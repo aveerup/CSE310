@@ -1,14 +1,2 @@
-Error at line 2: Undeclared variable a
-
-Error at line 2: Undeclared variable b
-
-Error at line 7: Undeclared variable i
-
-Error at line 9: Undeclared variable i
-
-Error at line 10: Undeclared variable i
-
-Error at line 11: Undeclared variable i
-
-Line No. 12: break outside loop
+Error at line 41: Type Mismatch
 

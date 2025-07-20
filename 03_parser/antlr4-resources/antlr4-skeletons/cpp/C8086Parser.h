@@ -510,12 +510,9 @@ public:
     C8086Parser::Expression_errContext *er = nullptr;
     VariableContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    std::vector<antlr4::tree::TerminalNode *> ID();
-    antlr4::tree::TerminalNode* ID(size_t i);
-    std::vector<antlr4::tree::TerminalNode *> LTHIRD();
-    antlr4::tree::TerminalNode* LTHIRD(size_t i);
-    std::vector<antlr4::tree::TerminalNode *> RTHIRD();
-    antlr4::tree::TerminalNode* RTHIRD(size_t i);
+    antlr4::tree::TerminalNode *ID();
+    antlr4::tree::TerminalNode *LTHIRD();
+    antlr4::tree::TerminalNode *RTHIRD();
     ExpressionContext *expression();
     Expression_errContext *expression_err();
 
@@ -531,13 +528,14 @@ public:
     Info info;
     Param param;
     C8086Parser::Logic_expressionContext *le = nullptr;
+    C8086Parser::VariableContext *var = nullptr;
     C8086Parser::VariableContext *variableContext = nullptr;
     antlr4::Token *assignopToken = nullptr;
     ExpressionContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     Logic_expressionContext *logic_expression();
-    VariableContext *variable();
     antlr4::tree::TerminalNode *ASSIGNOP();
+    VariableContext *variable();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;

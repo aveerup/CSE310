@@ -1,0 +1,12 @@
+./input/bonustest1_i.c
+./input/bonustest2_i.c
+./input/exp.c
+./input/func.c
+./input/loop.c
+./input/test1_i.c
+./input/test2_i.c
+./input/test3_i.c
+./input/test4_i.c
+./input/test5_i.c
+./input/test6_i.c
+./input/test7_i.c

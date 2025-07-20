@@ -1,0 +1,1 @@
+./icg.out loop.c

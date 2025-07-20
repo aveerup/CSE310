@@ -193,6 +193,11 @@ func_definition returns [Info info]
 						temp->set_is_defined(true);
 						symbolTable.Enter_Scope();
 						in_func_check = 1;
+
+						for(int i = 0; i<$pl.params.size(); i++){
+						std::cout<<i<<" 1.1 "<<$pl.params[i].name<<endl;
+						symbolTable.Insert($pl.params[i].name, "ID", $t.info.line);
+				}
 					}else{
 						writeIntoparserLogFile("Error at Line " + std::to_string($ID->getLine())
 							+ ": Multiple declaration of function " + $ID->getText() + "\n");
@@ -204,15 +209,21 @@ func_definition returns [Info info]
 				symbolTable.Insert($ID->getText(), "ID", $t.info.line, false, true, true);
 				symbolTable.Enter_Scope();
 				in_func_check = 1;
+			
+				for(int i = 0; i<$pl.params.size(); i++){
+					std::cout<<i<<" 1.1 "<<$pl.params[i].name<<endl;
+					symbolTable.Insert($pl.params[i].name, "ID", $t.info.line);
+				}
 			}
 			
 			
 		}
 		 cs=compound_statement {
-			for(int i = 0; i<$pl.params.size(); i++){
-				std::cout<<i<<" 1.1 "<<$pl.params[i].name<<endl;
-				symbolTable.Insert($pl.params[i].name, "ID", $t.info.line);
+			if(in_func_check == 1){
+				symbolTable.Exit_Scope();
+				in_func_check = 0;
 			}
+			
 			$info.set_line($t.info, 1)
 				->set_line($ID->getText(), $ID->getLine())
 				->set_line("(", $LPAREN->getLine())
@@ -229,6 +240,11 @@ func_definition returns [Info info]
 			in_func_check = 1;
 		}  
 		cs=compound_statement {
+			if(in_func_check == 1){
+				symbolTable.Exit_Scope();
+				in_func_check = 0;
+			}
+
 			$info.set_line($t.info, 1)
 				->set_line($ID->getText(), $ID->getLine())
 				->set_line("(", $LPAREN->getLine())
@@ -380,7 +396,7 @@ var_declaration returns [Info info]
 	 }
 
     | t=type_specifier dlr=declaration_list_err sm=SEMICOLON {
-       $info.set_line($t.info)
+        $info.set_line($t.info)
 	   		->set_line($dlr.info)
 			->set_line($sm->getText(), $sm->getLine());
 
@@ -575,7 +591,7 @@ statement returns [Info info]
 					+ $info.line + "\n");
 	   }
 	  | WHILE LPAREN e=expression RPAREN{
-		in_loop_check++;
+			in_loop_check++;
 	  } s=statement {
 				if(in_loop_check>0){
 					in_loop_check--;
@@ -676,77 +692,71 @@ expression_statement returns [Info info]
 	  
 variable returns [Info info, Param param]
 	 : ID {
-				SymbolInfo *temp = symbolTable.Look_Up($ID->getText());
+		SymbolInfo *temp = symbolTable.Look_Up($ID->getText());
 
-				if(temp == NULL){
-					Param t("error", $ID->getText(), false, false);
-					$param = t;
-					writeIntoparserLogFile("Error at line " + std::to_string($ID->getLine()) 
-						+ ": Undeclared variable " + $ID->getText() + "\n");
-					writeIntoErrorFile("Error at line " + std::to_string($ID->getLine()) 
-						+ ": Undeclared variable " + $ID->getText() + "\n");
-					syntaxErrorCount++;
-				}else{
-					Param t(temp->get_type_specifier(), temp->get_variable_name(), temp->get_is_array(), temp->get_is_func());
-					$param = t;
-					if(temp->get_is_array()){
-						writeIntoparserLogFile("Error at line " + std::to_string($ID->getLine()) 
-							+ ": Type mismatch, " + $ID->getText() + " is an array\n");
-						writeIntoErrorFile("Error at line " + std::to_string($ID->getLine()) 
-							+ ": Type mismatch, " + $ID->getText() + " is an array\n");
-						syntaxErrorCount++;
-					}
-						
-				}
+		if(temp == NULL){
+			Param t($ID->getText());
+			$param = t;
+		}else if(temp->get_is_array()){
+			writeIntoparserLogFile("Error at line " + std::to_string($ID->getLine()) 
+				+ ": Type mismatch, " + $ID->getText() + " is an array\n");
+			writeIntoErrorFile("Error at line " + std::to_string($ID->getLine()) 
+				+ ": Type mismatch, " + $ID->getText() + " is an array\n");
+			syntaxErrorCount++;
+		}else{
+			Param t(temp->get_type_specifier(), temp->get_variable_name(), temp->get_is_array(), temp->get_is_func());
+			$param = t;
+		}
 
-				$info.set_line($ID->getText(), $ID->getLine());
-				writeIntoparserLogFile("Line " + std::to_string($info.line_no)
-					+ ": variable : ID\n\n"
-					+ $info.line + "\n");
+		$info.set_line($ID->getText(), $ID->getLine());
+		writeIntoparserLogFile("Line " + std::to_string($info.line_no)
+			+ ": variable : ID\n\n"
+			+ $info.line + "\n");
 	 } 		
 	 | ID LTHIRD e=expression RTHIRD {
-				SymbolInfo *temp = symbolTable.Look_Up($ID->getText());
+		SymbolInfo *temp = symbolTable.Look_Up($ID->getText());
 
-				if(temp == NULL){
-					Param t("error", $ID->getText(), false, false);
-					$param = t;
-					writeIntoErrorFile("Error at line " + std::to_string($ID->getLine()) 
-						+ ": Undeclared variable " + $ID->getText() + "\n");
-					syntaxErrorCount++;
-				}else{
-					Param t(temp->get_type_specifier(), temp->get_variable_name(), temp->get_is_array(), temp->get_is_func());
-					$param = t;
-					if(!temp->get_is_array()){
-						writeIntoparserLogFile("Error at line " + std::to_string($ID->getLine()) 
-							+ ": Type mismatch," + $ID->getText() + " is not an array\n");
-						writeIntoErrorFile("Error at line " + std::to_string($ID->getLine()) 
-							+ ": Type mismatch," + $ID->getText() + " is not an array\n");
-						syntaxErrorCount++;
-					}
-				}
+		if(temp == NULL){
+			Param t("error", $ID->getText(), false, false);
+			$param = t;
+			writeIntoErrorFile("Error at line " + std::to_string($ID->getLine()) 
+				+ ": Undeclared variable " + $ID->getText() + "\n");
+			syntaxErrorCount++;
+		}else{
+			Param t(temp->get_type_specifier(), temp->get_variable_name(), temp->get_is_array(), temp->get_is_func());
+			$param = t;
+			if(!temp->get_is_array()){
+				writeIntoparserLogFile("Error at line " + std::to_string($ID->getLine()) 
+					+ ": Type mismatch," + $ID->getText() + " is not an array\n");
+				writeIntoErrorFile("Error at line " + std::to_string($ID->getLine()) 
+					+ ": Type mismatch," + $ID->getText() + " is not an array\n");
+				syntaxErrorCount++;
+			}
+		}
 
-				if(checkFloat($e.info.line)){
-					Param t("error", $ID->getText(), false, false);
-					$param = t;
-					writeIntoErrorFile("Error at line " + std::to_string($ID->getLine()) 
-						+ ": Expression inside third brackets not an integer\n");
-					SemanticErrorCount++;
-				}
+		if(checkFloat($e.info.line)){
+			Param t("error", $ID->getText(), false, false);
+			$param = t;
+			writeIntoErrorFile("Error at line " + std::to_string($ID->getLine()) 
+				+ ": Expression inside third brackets not an integer\n");
+			SemanticErrorCount++;
+		}
 
-				$info.set_line($ID->getText(), $ID->getLine())
-					->set_line("[", $LTHIRD->getLine())
-					->set_line($e.info)
-					->set_line("]", $RTHIRD->getLine());
-				writeIntoparserLogFile("Line " + std::to_string($info.line_no)
-					+ ": variable : ID LTHIRD expression RTHIRD\n\n");
-				if(checkFloat($e.info.line)){
-					writeIntoparserLogFile("Error at line " + std::to_string($e.info.line_no) 
-						+ ": Expression inside third brackets not an integer\n\n"
-						+ $info.line +"\n");
-				}else{
-					writeIntoparserLogFile($info.line + "\n");
-				}
-	}ID LTHIRD er=expression_err RTHIRD {
+		$info.set_line($ID->getText(), $ID->getLine())
+			->set_line("[", $LTHIRD->getLine())
+			->set_line($e.info)
+			->set_line("]", $RTHIRD->getLine());
+		writeIntoparserLogFile("Line " + std::to_string($info.line_no)
+			+ ": variable : ID LTHIRD expression RTHIRD\n\n");
+		if(checkFloat($e.info.line)){
+			writeIntoparserLogFile("Error at line " + std::to_string($e.info.line_no) 
+				+ ": Expression inside third brackets not an integer\n\n"
+				+ $info.line +"\n");
+		}else{
+			writeIntoparserLogFile($info.line + "\n");
+		}
+	}
+	|ID LTHIRD er=expression_err RTHIRD {
 		$info.set_line($ID->getText(), $ID->getLine())
 			->set_line("[", $LTHIRD->getLine())
 			->set_line($er.info)
@@ -768,30 +778,43 @@ variable returns [Info info, Param param]
 				+ ": expression : logic_expression\n\n"
 				+ $info.line + "\n");
 	   }	
-	   | variable ASSIGNOP le=logic_expression {
-				Param t($variable.param.type, "expression", $variable.param.is_array, $variable.param.is_func);
+	   | var=variable ASSIGNOP le=logic_expression {
+			cout<<"ASSIGNOP "<<$param.type<<" "<<endl;
+			cout<<"ASSIGNOP "<<$le.param.type<<" "<<endl;
+
+			SymbolInfo *temp = symbolTable.Look_Up($var.param.name);
+
+			if(temp == NULL){
+				Param t("error", $var.param.name, false, false);
 				$param = t;
-				cout<<"ASSIGNOP "<<$param.type<<" "<<endl;
-				cout<<"ASSIGNOP "<<$le.param.type<<" "<<endl;
+				writeIntoparserLogFile("Error at line " + std::to_string($ASSIGNOP->getLine()) 
+					+ ": Undeclared variable " + $var.param.name + "\n");
+				writeIntoErrorFile("Error at line " + std::to_string($ASSIGNOP->getLine()) 
+					+ ": Undeclared variable " + $var.param.name + "\n");
+				syntaxErrorCount++;
+			}else{
+				Param t(temp->get_type_specifier(), temp->get_variable_name(), temp->get_is_array(), temp->get_is_func());
+				$param = t;
+			}
 
-				if($variable.param.type != $le.param.type 
-					&& $variable.param.type != "error"
-					&& $le.param.type != "error"
-					&& !($variable.param.type == "bool" && $le.param.type == "int")
-					&& !($variable.param.type == "int" && $le.param.type == "bool")){
+			if($variable.param.type != $le.param.type 
+				&& $var.param.type != "error"
+				&& $le.param.type != "error"
+				&& !($var.param.type == "bool" && $le.param.type == "int")
+				&& !($var.param.type == "int" && $le.param.type == "bool")){
 
-					cout<<"ASSIGNOP1 "<<$variable.param.type<<" "<<$variable.info.line<<endl;
-					cout<<"ASSIGNOP1 "<<$le.param.type<<" "<<$le.info.line<<endl;
-					writeIntoErrorFile("Error at line " + std::to_string($ASSIGNOP->getLine()) 
-						+ ": Type Mismatch\n");
-					SemanticErrorCount++;
-				}
-				$info.set_line($variable.info)
-					->set_line($ASSIGNOP->getText(), $ASSIGNOP->getLine())
-					->set_line($le.info);
-				writeIntoparserLogFile("Line " + std::to_string($info.line_no)
-					+ ": expression : variable ASSIGNOP logic_expression\n\n"
-					+ $info.line + "\n");
+				cout<<"ASSIGNOP1 "<<$var.param.type<<" "<<$var.info.line<<endl;
+				cout<<"ASSIGNOP1 "<<$le.param.type<<" "<<$le.info.line<<endl;
+				writeIntoErrorFile("Error at line " + std::to_string($ASSIGNOP->getLine()) 
+					+ ": Type Mismatch\n");
+				SemanticErrorCount++;
+			}
+			$info.set_line($variable.info)
+				->set_line($ASSIGNOP->getText(), $ASSIGNOP->getLine())
+				->set_line($le.info);
+			writeIntoparserLogFile("Line " + std::to_string($info.line_no)
+				+ ": expression : variable ASSIGNOP logic_expression\n\n"
+				+ $info.line + "\n");
 	   } 	
 	   ;
 
